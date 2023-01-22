@@ -1,0 +1,28 @@
+[build-system]
+requires = ["flit_core>=3.2"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "jupyterpost"
+authors = [
+  { name="Anton Akhmerov", email="jupyterpost@antonakhmerov.org" },
+]
+dynamic = ["version", "description"]
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+# The minimal versions are somewhat arbitrary, but should be compatible
+dependencies = [
+    "jupyterhub >= 3.0.0",
+    "httpx >= 0.19.0",
+]
+[project.scripts]
+jupyterpost = "jupyterpost:main"
+
+# [project.urls]
+# "Homepage" = "https://github.com/pypa/sampleproject"
+# "Bug Tracker" = "https://github.com/pypa/sampleproject/issues"
