@@ -4,10 +4,8 @@ Modeled after the JupyterHub Service example at
 https://github.com/jupyterhub/jupyterhub/tree/main/examples/service-whoami
 """
 import os
-import sys
 from urllib.parse import urlparse
 import logging
-import asyncio
 from io import BytesIO
 
 from tornado.httpserver import HTTPServer
@@ -67,20 +65,42 @@ async def hub_post_message(message, channel, file_=None, team_name=None):
         MATTERMOST_TEAM environment variable.
     """
     team_name = team_name or os.getenv("MATTERMOST_TEAM")
-
-    # Find the channel id
+    me = (await mm_api_call("get", "users/me"))["id"]
     if channel.startswith("@"):
         # A direct message
-        users = await asyncio.gather(
-            mm_api_call("get", "users/me"),
-            mm_api_call("get", f"users/username/{channel[1:]}"),
-        )
-        user_ids = [user["id"] for user in users]
-        channel = await mm_api_call("post", "channels/direct", json=user_ids)
+        try:
+            other = (await mm_api_call("get", f"users/username/{channel[1:]}"))["id"]
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                # User does not exist
+                raise ValueError(f"{channel} does not exist")
+            else:
+                raise
+        # Check if they are a member of the team
+        team_id = (await mm_api_call("get", f"teams/name/{team_name}"))["id"]
+        try:
+            await mm_api_call("get", f"teams/{team_id}/members/{other}")
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                # Not a member, refuse to post
+                raise ValueError(f"{channel} is not a member of {team_name}")
+            else:
+                raise
+        channel = await mm_api_call("post", "channels/direct", json=[me, other])
     else:
-        channel = await mm_api_call(
-            "get", f"teams/name/{team_name}/channels/name/{channel}"
-        )
+        try:
+            channel = await mm_api_call(
+                "get", f"teams/name/{team_name}/channels/name/{channel}"
+            )
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                # Channel does not exist or is private
+                raise ValueError(f"{channel} does not exist or is private")
+            else:
+                raise
+        # Join the channel (this is idempotent)
+        await mm_api_call("post", f"channels/{channel['id']}/members", json={"user_id": me})
+
     channel_id = channel["id"]
 
     if file_:  # Upload the file
@@ -108,7 +128,11 @@ class ChatPostHandler(HubAuthenticated, RequestHandler):
         message = f"*@{username} {os.getenv('BOT_SIGNATURE')}*: {message}"
         channel = self.get_argument("channel")
         file_ = self.request.files.get("file", [{"body": None}])[0]["body"]
-        await hub_post_message(message, channel, file_)
+        try:
+            await hub_post_message(message, channel, file_)
+        except ValueError as e:
+            self.set_status(400)
+            self.write(str(e))
 
 
 def configure_jupyterhub(
@@ -206,7 +230,8 @@ def post(message, channel, attachment=None, service_url=None, token=None):
         data={"message": message, "channel": channel},
         files={"file": attachment} if attachment else None,
     )
-    response.raise_for_status()
+    if response.is_error:
+        raise ValueError(response.text)
 
 
 def main():
