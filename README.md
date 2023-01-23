@@ -38,6 +38,11 @@ post(
 )
 ```
 
+### Posting from outside of your Jupyterhub
+
+1. Get the variables `JUPYTERPOST_URL` and `JPY_API_TOKEN` from your Jupyterhub server.
+2. Provide them to `jupyterpost.post` as additional arguments and connect from anywhere!
+
 ## Contributing
 
 Contributions are welcome! Please open an issue or a pull request.
