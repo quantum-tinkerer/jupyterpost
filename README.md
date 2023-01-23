@@ -1,5 +1,9 @@
 # Jupyterpost: post from Jupyterhub to a Mattermost server
 
+## Installing
+
+`pip install jupyterpost`
+
 ## Enabling jupyterpost
 
 1. Create a bot user on your Mattermost server and get its token.
