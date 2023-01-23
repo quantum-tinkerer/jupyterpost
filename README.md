@@ -13,6 +13,7 @@ configure_jupyterhub(
     mattermost_token="your mattermost token",
     mattermost_url="https://your.mattermost.server/api/v4/",
     mattermost_team="your mattermost team name",
+    jupyterpost_url="https://services.your.jupyterhub/services/jupyterpost",
 )
 ```
 This will:

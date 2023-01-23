@@ -99,7 +99,9 @@ async def hub_post_message(message, channel, file_=None, team_name=None):
             else:
                 raise
         # Join the channel (this is idempotent)
-        await mm_api_call("post", f"channels/{channel['id']}/members", json={"user_id": me})
+        await mm_api_call(
+            "post", f"channels/{channel['id']}/members", json={"user_id": me}
+        )
 
     channel_id = channel["id"]
 
@@ -142,6 +144,7 @@ def configure_jupyterhub(
     mattermost_team: str,
     port: int = 10101,
     bot_signature: str = "(via jupyterpost)",
+    jupyterpost_url: str = None,
 ):
     """Configure JupyterHub to use this service.
 
@@ -160,6 +163,9 @@ def configure_jupyterhub(
     bot_signature : str, optional
         The signature to add to messages posted by the bot. Defaults to
         "(via jupyterpost)".
+    jupyterpost_url : str, optional
+        The URL to use for the service. TODO: Should be inferred from the config,
+        but this doesn't work well yet.
     """
     c.JupyterHub.services.append(
         {
@@ -183,11 +189,15 @@ def configure_jupyterhub(
     c.JupyterHub.load_roles = [
         r for name, r in roles.items() if name not in "user server"
     ] + [user_role, server_role]
-    # Initialize a fake JupyterHub to figure out our bind URL
-    hub = JupyterHub(config=c)
+    try:
+        environment = c.Spawner.environment.to_dict()
+    except AttributeError:
+        # Already a dict
+        environment = c.Spawner.environment
     c.Spawner.environment = {
-        **c.Spawner.environment.to_dict(),
-        "JUPYTERPOST_URL": hub.bind_url + "services/jupyterpost",
+        **environment,
+        "JUPYTERPOST_URL": jupyterpost_url
+        or JupyterHub(config=c).bind_url + "services/jupyterpost",
     }
 
 
