@@ -30,6 +30,7 @@ The function is somewhat fragile, but should work for standard Jupyterhub instal
 
 ## Using jupyterpost
 
+The low level interface to Jupyterpost is `jupyterpost.post`. It takes a message, a channel, and an attachment, and posts it to the Mattermost server.
 ```python
 from jupyterpost import post
 from matplotlib import pyplot
@@ -41,6 +42,30 @@ post(
     attachment=pyplot.gcf(),  # Or png bytes
 )
 ```
+In practice, however, you will probably want to use the `%post`/`%%post` magic commands.
+Both become available after importing `jupyterpost`.
+The line magic is meant for short messages:
+```ipython
+run_long_computation()
+%post @myself Computation done!
+```
+The cell magic can:
+- Post a multiline formatted message with a `-r` argument
+
+    ```ipython
+    %%post <channel> -r
+    ## Markdown title
+    - Anything
+    - Goes
+    ```
+- Post the cell outputs (latex, plain text, markdown), and a single image (for now)
+- Optionally include the cell input with a `-i` argument
+
+    ```ipython
+    %%post <channel> -i
+    import matplotlib.pyplot as plt
+    plt.plot([0, 1])
+    ```
 
 ### Posting from outside of your Jupyterhub
 
