@@ -102,12 +102,13 @@ class JupyterpostMagics(Magics):
     def post(self, line, cell=None):
         """Post a message to Mattermost using the JupyterHub service."""
         args = magic_arguments.parse_argstring(self.post, line)
-        message = [" ".join(args.message)]
+        message = " ".join(args.message)
         if cell is None:
-            if not message[0]:
+            if not message:
                 raise ValueError("No message given")
-            post(message[0], args.channel, service_url=args.url, token=args.token)
+            post(message, args.channel, service_url=args.url, token=args.token)
             return
+        message = [message] if message else ["​"] # Zero-width space for linebreaks
         if args.raw:
             message = "\n".join((message[0], cell))
             post(message, args.channel, service_url=args.url, token=args.token)
