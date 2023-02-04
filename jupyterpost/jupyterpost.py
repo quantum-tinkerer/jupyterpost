@@ -17,6 +17,11 @@ from jupyterhub.services.auth import HubAuthenticated
 from jupyterhub.roles import get_default_roles
 from jupyterhub.app import JupyterHub
 
+from IPython.core import magic_arguments
+from IPython.core.magic import register_cell_magic
+from IPython.display import display
+from IPython.utils.capture import capture_output
+
 logger = logging.getLogger("jupyterpost")
 logger.setLevel(logging.INFO)
 
@@ -199,49 +204,6 @@ def configure_jupyterhub(
         "JUPYTERPOST_URL": jupyterpost_url
         or JupyterHub(config=c).bind_url + "services/jupyterpost",
     }
-
-
-def post(message, channel, attachment=None, service_url=None, token=None):
-    """Post a message to Mattermost using the JupyterHub service.
-
-    Parameters
-    ----------
-    message : str
-        The message to post.
-    channel : str
-        The channel to post to. If it starts with '@', it is assumed to be a
-        direct message to the user with that username.
-    attachment : bytes or matplotlib figure, optional
-        A png file to upload. If given, will be attached to the message.
-    service_url : str, optional
-        The URL of the JupyterHub service. If not given, will be taken from the
-        JUPYTERPOST_URL environment variable.
-    token : str, optional
-        The API token to use. If not given, will be taken from the
-        JPY_API_TOKEN environment variable.
-    """
-    service_url = service_url or os.getenv("JUPYTERPOST_URL")
-    token = token or os.getenv("JPY_API_TOKEN")
-    if not service_url:
-        raise ValueError("No service URL given")
-    if not token:
-        raise ValueError("No API token given")
-    if attachment and not isinstance(attachment, bytes):
-        data = BytesIO()
-        try:
-            attachment.savefig(data, format="png")
-        except AttributeError:
-            raise TypeError("attachment must be a bytes object or matplotlib figure")
-        attachment = data.getvalue()
-
-    response = httpx.post(
-        service_url,
-        headers={"Authorization": f"token {token}"},
-        data={"message": message, "channel": channel},
-        files={"file": attachment} if attachment else None,
-    )
-    if response.is_error:
-        raise ValueError(response.text)
 
 
 def main():
