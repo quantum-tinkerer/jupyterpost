@@ -7,6 +7,8 @@ from IPython.core.magic import Magics, magics_class, line_cell_magic
 from IPython.core import magic_arguments
 from IPython import get_ipython  # type: ignore
 from IPython.utils.capture import capture_output
+import argparse
+import sys
 
 
 def post(message, channel, attachment=None, service_url=None, token=None):
@@ -167,3 +169,43 @@ try:
     get_ipython().register_magics(JupyterpostMagics)  # type: ignore
 except AttributeError:
     pass
+
+
+def _build_argparser():
+    parser = argparse.ArgumentParser(
+        prog="jupyterpost-client",
+        description="Post a message to Mattermost via the JupyterHub jupyterpost service",
+    )
+    parser.add_argument("channel", help="Channel to post to (prefix with @ for DM)")
+    parser.add_argument("message", nargs="+", help="Message to post")
+    parser.add_argument("-a", "--attachment", help="Path to a PNG attachment file", default=None)
+    parser.add_argument("--url", help="Service URL (overrides JUPYTERPOST_URL env)", default=None)
+    parser.add_argument("--token", help="API token (overrides JPY_API_TOKEN env)", default=None)
+    return parser
+
+
+def main(argv=None):
+    """Minimal CLI entrypoint for posting messages."""
+    argv = argv if argv is not None else sys.argv[1:]
+    parser = _build_argparser()
+    args = parser.parse_args(argv)
+
+    attachment_bytes = None
+    if args.attachment:
+        try:
+            with open(args.attachment, "rb") as f:
+                attachment_bytes = f.read()
+        except OSError as exc:
+            print(f"Error reading attachment: {exc}", file=sys.stderr)
+            return 2
+
+    try:
+        post(" ".join(args.message), args.channel, attachment=attachment_bytes, service_url=args.url, token=args.token)
+    except Exception as exc:  # pragma: no cover - surface errors to CLI
+        print(f"Failed to post message: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
