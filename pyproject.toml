@@ -27,3 +27,16 @@ jupyterpost = "jupyterpost:main"
 [project.urls]
 "Homepage" = "https://gitlab.kwant-project.org/qt/jupyterpost"
 "Bug Tracker" = "https://gitlab.kwant-project.org/qt/jupyterpost/-/issues"
+
+[tool.pixi.workspace]
+channels = ["https://prefix.dev/conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.pypi-dependencies]
+jupyterpost = { path = ".", editable = true }
+
+[tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+jupyterhub = ">=5.4.0,<6"
+ipython = ">=9.6.0,<10"

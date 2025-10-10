@@ -5,7 +5,7 @@ from base64 import b64decode
 import httpx
 from IPython.core.magic import Magics, magics_class, line_cell_magic
 from IPython.core import magic_arguments
-from IPython import get_ipython
+from IPython import get_ipython  # type: ignore
 from IPython.utils.capture import capture_output
 
 
@@ -119,7 +119,7 @@ class JupyterpostMagics(Magics):
 
         # Execute the cell
         with capture_output() as captured:
-            self.shell.run_cell(cell)
+            self.shell.run_cell(cell)  # type: ignore
 
         captured.show()
         message += captured.stdout
@@ -164,6 +164,6 @@ def load_ipython_extension(ipython):
 
 # Try and initialize the magics on import
 try:
-    get_ipython().register_magics(JupyterpostMagics)
+    get_ipython().register_magics(JupyterpostMagics)  # type: ignore
 except AttributeError:
     pass

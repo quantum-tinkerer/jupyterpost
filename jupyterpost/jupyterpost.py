@@ -6,7 +6,6 @@ https://github.com/jupyterhub/jupyterhub/tree/main/examples/service-whoami
 import os
 from urllib.parse import urlparse
 import logging
-from io import BytesIO
 
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
@@ -16,11 +15,6 @@ import httpx
 from jupyterhub.services.auth import HubAuthenticated
 from jupyterhub.roles import get_default_roles
 from jupyterhub.app import JupyterHub
-
-from IPython.core import magic_arguments
-from IPython.core.magic import register_cell_magic
-from IPython.display import display
-from IPython.utils.capture import capture_output
 
 logger = logging.getLogger("jupyterpost")
 logger.setLevel(logging.INFO)
@@ -130,7 +124,7 @@ async def hub_post_message(message, channel, file_=None, team_name=None):
 class ChatPostHandler(HubAuthenticated, RequestHandler):
     @authenticated
     async def post(self):
-        username = self.get_current_user()["name"]
+        username = self.get_current_user()["name"]  # type: ignore
         message = self.get_argument("message")
         message = f"*@{username} {os.getenv('BOT_SIGNATURE')}*: {message}"
         channel = self.get_argument("channel")
@@ -149,7 +143,7 @@ def configure_jupyterhub(
     mattermost_team: str,
     port: int = 10101,
     bot_signature: str = "(via jupyterpost)",
-    jupyterpost_url: str = None,
+    jupyterpost_url: str | None = None,
 ):
     """Configure JupyterHub to use this service.
 
