@@ -31,13 +31,24 @@ jpost = "jupyterpost.client:main"
 
 [tool.pixi.workspace]
 channels = ["https://prefix.dev/conda-forge"]
-platforms = ["linux-64"]
-
-[tool.pixi.pypi-dependencies]
-jupyterpost = { path = ".", editable = true }
-
-[tool.pixi.tasks]
+platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+preview = ["pixi-build"]
 
 [tool.pixi.dependencies]
 jupyterhub = ">=5.4.0,<6"
 ipython = ">=9.6.0,<10"
+
+[tool.pixi.package]
+name = "jupyterpost"
+version = "0.0.2"
+
+[tool.pixi.package.build]
+backend = { name = "pixi-build-python", version = "==0.4.0" }
+
+[tool.pixi.package.host-dependencies]
+flit-core = ">=3.2"
+
+[tool.pixi.package.run-dependencies]
+httpx = ">=0.19.0"
+ipython = ">=8.0.0"
+jupyterhub = ">=3.0.0"
