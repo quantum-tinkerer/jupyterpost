@@ -28,10 +28,15 @@ def post(message, channel, attachment=None, service_url=None, token=None):
         JUPYTERPOST_URL environment variable.
     token : str, optional
         The API token to use. If not given, will be taken from the
-        JPY_API_TOKEN environment variable.
+        JPY_API_TOKEN environment variable, falling back to
+        JUPYTERHUB_API_TOKEN.
     """
     service_url = service_url or os.getenv("JUPYTERPOST_URL")
-    token = token or os.getenv("JPY_API_TOKEN")
+    token = (
+        token
+        or os.getenv("JPY_API_TOKEN")
+        or os.getenv("JUPYTERHUB_API_TOKEN")
+    )
     if not service_url:
         raise ValueError("No service URL given")
     if not token:
